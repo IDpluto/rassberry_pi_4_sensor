@@ -2,8 +2,8 @@ import smbus
 import math
 import time
  
-power_mgmt_1 = 0x6b
-power_mgmt_2 = 0x6c
+power_mgmt_1 = 0x6c
+power_mgmt_2 = 0x6b
  
  
 def read_byte(adr):
