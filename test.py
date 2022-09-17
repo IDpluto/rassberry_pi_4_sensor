@@ -45,20 +45,20 @@ address = 0x68
 bus.write_byte_data(address, power_mgmt_1, 0)
  
 while True:
-    print "Gyroscope data"
-    print "--------------"
+    print ("Gyroscope data")
+    print ("--------------")
  
     gyro_xout = read_word_2c(0x43)
     gyro_yout = read_word_2c(0x45)
     gyro_zout = read_word_2c(0x47)
  
-    print "{}\t{}\t{}\t{}".format ("X out: ", gyro_xout, "scaled: ", (gyro_xout/131))
-    print "{}\t{}\t{}\t{}".format ("Y out: ", gyro_yout, " scaled: ", (gyro_yout / 131))
-    print "{}\t{}\t{}\t{}".format ("Z out: ", gyro_zout, " scaled: ", (gyro_zout / 131))
+    print ("{}\t{}\t{}\t{}".format ("X out: ", gyro_xout, "scaled: ", (gyro_xout/131)))
+    print ("{}\t{}\t{}\t{}".format ("Y out: ", gyro_yout, " scaled: ", (gyro_yout / 131)))
+    print ("{}\t{}\t{}\t{}".format ("Z out: ", gyro_zout, " scaled: ", (gyro_zout / 131)))
  
     print
-    print "Accelerometer data"
-    print "------------------"
+    print ("Accelerometer data")
+    print ("------------------")
  
     accel_xout = read_word_2c(0x3b)
     accel_yout = read_word_2c(0x3d)
@@ -74,8 +74,8 @@ while True:
      
     print
  
-    print "X rotation: ", get_x_rotation(accel_xout_scaled, accel_yout_scaled, accel_zout_scaled)
-    print "Y rotation: ", get_y_rotation(accel_xout_scaled, accel_yout_scaled, accel_zout_scaled)
+    print ("X rotation: "), get_x_rotation(accel_xout_scaled, accel_yout_scaled, accel_zout_scaled)
+    print ("Y rotation: "), get_y_rotation(accel_xout_scaled, accel_yout_scaled, accel_zout_scaled)
      
     print
  
