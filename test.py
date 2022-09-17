@@ -74,8 +74,8 @@ while True:
      
     print
  
-    print ("X rotation: "), get_x_rotation(accel_xout_scaled, accel_yout_scaled, accel_zout_scaled)
-    print ("Y rotation: "), get_y_rotation(accel_xout_scaled, accel_yout_scaled, accel_zout_scaled)
+    print ("X rotation: ", get_x_rotation(accel_xout_scaled, accel_yout_scaled, accel_zout_scaled))
+    print ("Y rotation: ", get_y_rotation(accel_xout_scaled, accel_yout_scaled, accel_zout_scaled))
      
     print
  
