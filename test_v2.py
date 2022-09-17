@@ -2,7 +2,7 @@
 # In order for this to run, the mpu9250_i2c file needs to 
 # be in the local folder
 
-from mpu9250_i2c import *
+from mpu6050_i2c import *
 import smbus,time,datetime
 import numpy as np
 import matplotlib.pyplot as plt
