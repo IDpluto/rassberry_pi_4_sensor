@@ -1,1 +1,30 @@
-/var/folders/0x/ghnj_bsx24357rbm_0q5v_sm0000gn/T/com.apple.useractivityd/shared-pasteboard/items/2BB4C952-8EB6-4108-978B-70322EF2D302/a25c53a25c3cca7fda6b2885078bf460ca4e53e1.rtfd
+<!DOCTYPE html>
+<html><body>
+<?php
+/*
+  Rui Santos
+  Complete project details at https://RandomNerdTutorials.com/esp32-esp8266-mysql-database-php/
+  
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files.
+  
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+*/
+
+$servername = "localhost";
+
+// REPLACE with your Database name
+$dbname = "REPLACE_WITH_YOUR_DATABASE_NAME";
+// REPLACE with Database user
+$username = "REPLACE_WITH_YOUR_USERNAME";
+// REPLACE with Database user password
+$password = "REPLACE_WITH_YOUR_PASSWORD";
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+} 
+
