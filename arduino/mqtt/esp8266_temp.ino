@@ -1,147 +1,184 @@
-#include <ESP8266WiFi.h>
-#include <PubSubClient.h>
-#include "DHT.h"
+#include <Arduino.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_MPU6050.h>
+#include <ESP8266WiFi.h>  // Enables the ESP8266 to connect to the local network (via WiFi)
+#include <PubSubClient.h> // Connect and publish to the MQTT broker
 
+Adafruit_MPU6050 mpu;
 
-#define DHTPIN D4 //DHT11을 D4번핀에 연결한다.
+sensors_event_t a, g, tmp;
+String Gyro[3];
+String Acc[3];
 
-#define DHTTYPE DHT11
+float gyroX, gyroY, gyroZ;
+float accX, accY, accZ;
+//float temperature;
 
-const char* ssid = "WIFI의 이름을 입력하세요";
-const char* password = "WIFI의 비밀번호를 입력하세요";
-const char* mqtt_server = "라즈베리파이의 IP를 입력하세요";
+//Gyroscope sensor deviation
+float gyroXerror = 0.00;
+float gyroYerror = 0.03;
+float gyroZerror = 0.01;
 
-WiFiClient espClient;
-PubSubClient client(espClient);
-long lastMsg = 0;
-char msg[50];
-String packet;
-float Humi,Temp;
-
-DHT dht(DHTPIN, DHTTYPE);
-
-
-
-void setup() {
-  Serial.begin(115200);
-  dht.begin();
-  setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+void MPU_init()
+{
+  if (!mpu.begin())
+  {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1);
+  }
 }
 
-void setup_wifi() {
+void getGyro_read()
+{
+  mpu.getEvent(&a, &g, &tmp);
 
-  delay(10);
-  // We start by connecting to a WiFi network
-  Serial.println();
+  float gyroX_tmp = g.gyro.x;
+  float gyroY_tmp = g.gyro.y;
+  float gyroZ_tmp = g.gyro.z;
+  
+  if (abs(gyroX_tmp) > gyroXerror)
+    gyroX += gyroX_tmp;//50.00;
+  if (abs(gyroY_tmp) > gyroYerror)
+    gyroY += gyroY_tmp;//70.00;
+  if (abs(gyroZ_tmp) > gyroZerror)
+    gyroZ += gyroZ_tmp;//90;
+
+  Gyro[0] = String(gyroX);
+  Gyro[1] = String(gyroY);
+  Gyro[2] = String(gyroZ);
+}
+
+void getAcc_read()
+{
+  mpu.getEvent(&a, &g, &tmp);
+  accX = a.acceleration.x;
+  accY = a.acceleration.y;
+  accZ = a.acceleration.z;
+
+  Acc[0] = String(accX);
+  Acc[1] = String(accY);
+  Acc[2] = String(accZ);
+}
+// WiFi
+const char* ssid = "leek3_101(2)_2.4G";                 // Your personal network SSID
+const char* wifi_password = "101101101"; // Your personal network password
+
+// MQTT
+const char* mqtt_server = "192.168.0.8";  // IP of the MQTT broker
+const char* gyrox_topic = "mpu6050/lab/gyrox";
+const char* gyroy_topic = "mpu6050/lab/gyroy";
+const char* gyroz_topic = "mpu6050/lab/gyroz";
+const char* accx_topic = "mpu6050/lab/accx";
+const char* accy_topic = "mpu6050/lab/accy";
+const char* accz_topic = "mpu6050/lab/accz";
+const char* mqtt_username = "dohlee"; // MQTT username
+const char* mqtt_password = "dohlee"; // MQTT password
+const char* clientID = "client_lab"; // MQTT client ID
+
+// Initialise the WiFi and MQTT Client objects
+WiFiClient wifiClient;
+// 1883 is the listener port for the Broker
+PubSubClient client(mqtt_server, 1883, wifiClient); 
+
+
+// Custom function to connet to the MQTT broker via WiFi
+void connect_MQTT(){
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
-  WiFi.begin(ssid, password);
+  // Connect to the WiFi
+  WiFi.begin(ssid, wifi_password);
 
+  // Wait until the connection has been confirmed before continuing
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
 
-  Serial.println("");
+  // Debugging - Output the IP Address of the ESP8266
   Serial.println("WiFi connected");
-  Serial.println("IP address: ");
+  Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-}
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
+  // Connect to MQTT Broker
+  // client.connect returns a boolean value to let us know if the connection was successful.
+  // If the connection is failing, make sure you are using the correct MQTT Username and Password (Setup Earlier in the Instructable)
+  if (client.connect(clientID, mqtt_username, mqtt_password)) {
+    Serial.println("Connected to MQTT Broker!");
   }
-  Serial.println();
-
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is acive low on the ESP-01)
-  } else {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+  else {
+    Serial.println("Connection to MQTT Broker failed...");
   }
 
 }
 
-void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    if (client.connect("ESP8266Client")) {
-      Serial.println("connected");
-      // Once connected, publish an announcement...
-      client.publish("outTopic", "hello world");
-      // ... and resubscribe
-      client.subscribe("inTopic");
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
-
-
-float getHumi() { //DHT11 습도를 받아오는 함수
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
-
-  if (isnan(h) || isnan(t)) {
-    Serial.println("Failed to read from DHT sensor!");
-  }
-
-  Serial.print("Humidity: ");
-  Serial.print(h);
-  Serial.print(" %\t");
-  return(h);
-}
-
-float getTemp() {//DHT11 온도를 받아오는 함수
-  
-  float t = dht.readTemperature();
-
-  Serial.print("Temperature: ");
-  Serial.print(t);
-  Serial.println(" *C ");
-
-  return(t);
-}
-
-void mqtt_publish(float Humi, float Temp){
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
-
-  long now = millis();
-  if (now - lastMsg > 2000) {
-    lastMsg = now;
-
-    packet = "Humidity : " + String(Humi) + "% " + "Temperature : " + String(Temp) + "*C" ; 
-    //문자열과 숫자를 합친다.
-    packet.toCharArray(msg, 50); 
-    //mqtt publishing이 char형으로만 보낼 수 있기때문에 toCharArray로 변환한다.
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish("Sensor/Humi_Temp", msg);
-  }
-  delay(5000); //5초 단위로 Publishing (조정가능)
+void setup() {
+  Serial.begin(9600);
+  MPU_init();
 }
 
 void loop() {
-  Humi = getHumi(); //습도를 받아서 변수에 입력
-  Temp = getTemp(); //온도를 받아서 변수에 입력
 
-  mqtt_publish(Humi, Temp);// 온습도의 값을 함수에 넣어서 해당 값을 통신을 통해서 전송한다.
+  connect_MQTT();
+  Serial.setTimeout(2000);
+  getGyro_read();
+  getAcc_read();
+  
+  Serial.print("Gyro_x: ");
+  Serial.println(Gyro[0]);
+  Serial.print(", ");
+  Serial.print("Gyro_y: ");
+  Serial.println(Gyro[1]);
+  Serial.print(", ");
+  Serial.print("Gyro_z: ");
+  Serial.println(Gyro[2]);
+  Serial.print(", ");
+  Serial.print("\n");
+  Serial.print("Acc_x: ");
+  Serial.println(Acc[0]);
+  Serial.print(", ");
+  Serial.print("Acc_y: ");
+  Serial.println(Acc[1]);
+  Serial.print(", ");
+  Serial.print("Acc_z: ");
+  Serial.println(Acc[2]);
+
+  
+  if (client.publish(gyrox_topic, Gyro[0]) && client.publish(gyroy_topic, Gyro[1]) && client.publish(gyroz_topic, Gyro[2])) {
+    Serial.println("Gyro sent!");
+  }
+  else {
+    Serial.println("Gyro data failed to send. Reconnecting to MQTT Broker and trying again");
+    client.connect(clientID, mqtt_username, mqtt_password);
+    delay(10);
+    client.publish(gyrox_topic, Gyro[0]);
+    client.publish(gyroy_topic, Gyro[1]);
+    client.publish(gyroz_topic, Gyro[2]);
+  }
+
+  if (client.publish(accx_topic, ACC[0]) && client.publish(accy_topic, ACC[1]) && client.publish(accz_topic, ACC[2])) {
+    Serial.println("Acc sent!");
+  }
+  else {
+    Serial.println("Acc data failed to send. Reconnecting to MQTT Broker and trying again");
+    client.connect(clientID, mqtt_username, mqtt_password);
+    delay(10);
+    client.publish(accx_topic, ACC[0]);
+    client.publish(accy_topic, ACC[1]);
+    client.publish(accz_topic, ACC[2]);
+  }
+
+  // if (client.publish(humidity_topic, String(h).c_str())) {
+  //   Serial.println("Humidity sent!");
+  // }
+  // // Again, client.publish will return a boolean value depending on whether it succeded or not.
+  // // If the message failed to send, we will try again, as the connection may have broken.
+  // else {
+  //   Serial.println("Humidity failed to send. Reconnecting to MQTT Broker and trying again");
+  //   client.connect(clientID, mqtt_username, mqtt_password);
+  //   delay(10); // This delay ensures that client.publish doesn't clash with the client.connect call
+  //   client.publish(humidity_topic, String(h).c_str());
+  // }
+  client.disconnect();  // disconnect from MQTT broker
+  delay(1);      // print new values every 1 Minute
 }
