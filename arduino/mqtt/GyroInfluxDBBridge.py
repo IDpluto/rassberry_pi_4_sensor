@@ -20,7 +20,7 @@ influxdb_client = InfluxDBClient(INFLUXDB_ADDRESS, 8086, INFLUXDB_USER, INFLUXDB
 
 class SensorData(NamedTuple):
     # location: str
-    # measurement: str
+    measurement: str
     # value: float
     location: str
     gyroxVal: float
@@ -49,7 +49,7 @@ def _parse_mqtt_message(topic, payload):
 def _send_sensor_data_to_influxdb(sensor_data):
     json_body = [
         {
-            #'measurement': sensor_data.measurement,
+            'measurement': sensor_data.measurement,
             'tags': {
                 'location': sensor_data.location
             },
