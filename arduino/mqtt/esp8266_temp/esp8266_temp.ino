@@ -7,8 +7,8 @@
 Adafruit_MPU6050 mpu;
 
 sensors_event_t a, g, tmp;
-String Gyro[3];
-String Acc[3];
+float Gyro[3];
+float Acc[3];
 
 float gyroX, gyroY, gyroZ;
 float accX, accY, accZ;
@@ -43,9 +43,9 @@ void getGyro_read()
   if (abs(gyroZ_tmp) > gyroZerror)
     gyroZ += gyroZ_tmp;//90;
 
-  Gyro[0] = String(gyroX);
-  Gyro[1] = String(gyroY);
-  Gyro[2] = String(gyroZ);
+  Gyro[0] = gyroX;
+  Gyro[1] = gyroY;
+  Gyro[2] = gyroZ;
 }
 
 void getAcc_read()
@@ -55,16 +55,16 @@ void getAcc_read()
   accY = a.acceleration.y;
   accZ = a.acceleration.z;
 
-  Acc[0] = String(accX);
-  Acc[1] = String(accY);
-  Acc[2] = String(accZ);
+  Acc[0] = accX;
+  Acc[1] = accY;
+  Acc[2] = accZ;
 }
 // WiFi
 const char* ssid = "leek3_101(2)_2.4G";                 // Your personal network SSID
 const char* wifi_password = "101101101"; // Your personal network password
 
 // MQTT
-const char* mqtt_server = "192.168.0.8";  // IP of the MQTT broker
+const char* mqtt_server = "192.9.64.120";  // IP of the MQTT broker
 const char* gyrox_topic = "mpu6050/lab/gyrox";
 const char* gyroy_topic = "mpu6050/lab/gyroy";
 const char* gyroz_topic = "mpu6050/lab/gyroz";
@@ -144,28 +144,28 @@ void loop() {
   Serial.println(Acc[2]);
 
   
-  if (client.publish(gyrox_topic, Gyro[0]) && client.publish(gyroy_topic, Gyro[1]) && client.publish(gyroz_topic, Gyro[2])) {
+  if (client.publish(gyrox_topic, String(Gyro[0]).c_str()) && client.publish(gyroy_topic, String(Gyro[1]).c_str()) && client.publish(gyroz_topic, String(Gyro[2]).c_str())) {
     Serial.println("Gyro sent!");
   }
   else {
     Serial.println("Gyro data failed to send. Reconnecting to MQTT Broker and trying again");
     client.connect(clientID, mqtt_username, mqtt_password);
     delay(10);
-    client.publish(gyrox_topic, Gyro[0]);
-    client.publish(gyroy_topic, Gyro[1]);
-    client.publish(gyroz_topic, Gyro[2]);
+    client.publish(gyrox_topic, String(Gyro[0]).c_str());
+    client.publish(gyroy_topic, String(Gyro[1]).c_str());
+    client.publish(gyroz_topic, String(Gyro[2]).c_str());
   }
 
-  if (client.publish(accx_topic, ACC[0]) && client.publish(accy_topic, ACC[1]) && client.publish(accz_topic, ACC[2])) {
+  if (client.publish(accx_topic, String(Acc[0]).c_str()) && client.publish(accy_topic, String(Acc[1]).c_str()) && client.publish(accz_topic, String(Acc[2]).c_str())) {
     Serial.println("Acc sent!");
   }
   else {
     Serial.println("Acc data failed to send. Reconnecting to MQTT Broker and trying again");
     client.connect(clientID, mqtt_username, mqtt_password);
     delay(10);
-    client.publish(accx_topic, ACC[0]);
-    client.publish(accy_topic, ACC[1]);
-    client.publish(accz_topic, ACC[2]);
+    client.publish(accx_topic, String(Acc[0]).c_str());
+    client.publish(accy_topic, String(Acc[1]).c_str());
+    client.publish(accz_topic, String(Acc[2]).c_str());
   }
 
   // if (client.publish(humidity_topic, String(h).c_str())) {
