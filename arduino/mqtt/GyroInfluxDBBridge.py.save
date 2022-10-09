@@ -1,15 +1,15 @@
-import re
+\import re
 from typing import NamedTuple
 
 import paho.mqtt.client as mqtt
 from influxdb import InfluxDBClient
 
-INFLUXDB_ADDRESS = '192.168.68.56'
+INFLUXDB_ADDRESS = '192.9.64.120'
 INFLUXDB_USER = 'mqtt'
 INFLUXDB_PASSWORD = 'mqtt'
 INFLUXDB_DATABASE = 'crc_stations'
 
-MQTT_ADDRESS = '192.168.68.56'
+MQTT_ADDRESS = '192.9.64.120'
 MQTT_USER = 'dohlee'
 MQTT_PASSWORD = 'dohlee'
 MQTT_TOPIC = 'mpu6050/+/+'
@@ -19,10 +19,10 @@ MQTT_CLIENT_ID = 'MQTTInfluxDBBridge'
 influxdb_client = InfluxDBClient(INFLUXDB_ADDRESS, 8086, INFLUXDB_USER, INFLUXDB_PASSWORD, None)
 
 class SensorData(NamedTuple):
-    location: str
+    # location: str
     measurement: str
     value: float
-    #location: str
+    location: str
     #gyroxVal: float
     #gyroyVal: float
     #gyrozVal: float
@@ -55,7 +55,7 @@ def _parse_mqtt_message(topic, payload):
 def _send_sensor_data_to_influxdb(sensor_data):
     json_body = [
         {
-           'measurement': sensor_data.measurement,
+            'measurement': sensor_data.measurement,
             'tags': {
                 'location': sensor_data.location
             },
@@ -67,7 +67,7 @@ def _send_sensor_data_to_influxdb(sensor_data):
                 #'accyVal': sensor_data.accyVal,
                 #'acczVal': sensor_data.acczVal
                'value': sensor_data.value
-           }
+            }
         }
     ]
     influxdb_client.write_points(json_body)
